@@ -56,16 +56,18 @@
       const hasAltura = props.altura && !isNaN(+props.altura.getValue?.());
       const hasPisos  = props.pisos  && !isNaN(+props.pisos.getValue?.());
       const altura = hasAltura ? +props.altura.getValue()
-                    : hasPisos  ? +props.pisos.getValue() * 3   // 3 m por piso
-                                : 6;
+                : hasPisos  ? +props.pisos.getValue() * 3   // 3 m por piso
+                            : 6;
 
       pol.material = Cesium.Color.fromCssColorString("#7a8a50").withAlpha(0.95);
       pol.outline = true;
       pol.outlineColor = Cesium.Color.BLACK;
 
+      // Ajuste para que los edificios no floten
+      pol.height = 0; // base en el suelo
       pol.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
-      pol.extrudedHeight = altura; // en metros
-      pol.extrudedHeightReference = Cesium.HeightReference.RELATIVE_TO_GROUND;
+      pol.extrudedHeight = altura; // altura total del edificio
+      pol.extrudedHeightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
     }
 
     // 3) (Opcional) Edificios OSM recortados a la zona del barrio
