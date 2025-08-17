@@ -29,7 +29,7 @@
     viewer.scene.globe.depthTestAgainstTerrain = true;
 
     // 1) Capa del barrio: SOLO para ubicar/recortar (sin extrusión)
-    const barrio = await Cesium.GeoJsonDataSource.load("Predios_Macarena.geojson", {
+    const barrio = await Cesium.GeoJsonDataSource.load("Construccion_Macarena.geojson", {
       clampToGround: true
     });
     viewer.dataSources.add(barrio);
@@ -43,11 +43,13 @@
 
     // 2) PREDIOS: extrusión (usa 'altura' o 'pisos'; fallback 6 m)
     // Exporta desde QGIS como EPSG:4326
-    const predios = await Cesium.GeoJsonDataSource.load("Predios_Macarena.geojson", {
+    const predios = await Cesium.GeoJsonDataSource.load("Construccion_Macarena.geojson", {
       // importante: SIN clampToGround si vas a extruir
     });
     viewer.dataSources.add(predios);
 
+    // Sustituye por este único bucle para extrusión y color:
+    let extruidos = 0;
     for (const e of predios.entities.values) {
       const pol = e.polygon;
       if (!pol) continue;
@@ -56,19 +58,20 @@
       const hasAltura = props.altura && !isNaN(+props.altura.getValue?.());
       const hasPisos  = props.pisos  && !isNaN(+props.pisos.getValue?.());
       const altura = hasAltura ? +props.altura.getValue()
-                : hasPisos  ? +props.pisos.getValue() * 3   // 3 m por piso
+                : hasPisos  ? +props.pisos.getValue() * 3
                             : 6;
 
-      pol.material = Cesium.Color.fromCssColorString("#7a8a50").withAlpha(0.95);
+      pol.material = Cesium.Color.fromCssColorString("#2ecc40").withAlpha(0.95);
       pol.outline = true;
       pol.outlineColor = Cesium.Color.BLACK;
+      pol.height = 0;
+      pol.extrudedHeight = altura;
+      pol.closeTop = true;
+      pol.closeBottom = true;
 
-      // Ajuste para que los edificios no floten
-      pol.height = 0; // base en el suelo
-      pol.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
-      pol.extrudedHeight = altura; // altura total del edificio
-      pol.extrudedHeightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+      extruidos++;
     }
+    console.log("Polígonos extruidos:", extruidos);
 
     // 3) (Opcional) Edificios OSM recortados a la zona del barrio
     // Útil si en OSM hay huellas/alturas; si no, quizá veas pocos.
@@ -103,6 +106,20 @@
       destination: Cesium.Cartesian3.fromDegrees(-74.17653, 4.59027, 2600),
       orientation: { heading: 0, pitch: Cesium.Math.toRadians(-25) }
     });
+
+    // Si quieres animación automática, puedes usar esto:
+    /*
+    let animando = true;
+    let altura = 6;
+    function animar() {
+      if (!animando) return;
+      altura += 0.2;
+      if (altura > 50) altura = 6;
+      edificios.forEach(pol => pol.extrudedHeight = altura);
+      requestAnimationFrame(animar);
+    }
+    animar();
+    */
   </script>
 </body>
 </html>
